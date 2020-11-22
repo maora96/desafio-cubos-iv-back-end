@@ -12,7 +12,7 @@ router.get();
 router.post();
 
 router.post('/auth', Auth.autenticar)
-router.post('/usuarios',) // adicionar função para controller que criar usuário
+router.post('/usuarios', Password.encrypt,) // adicionar função para controller que criar usuário. encriptar senha criada, por isso usar password
 router.post('/clintes, Session.verify, ') // adicionar função para controller que cria cliente. só usuários cadastrados podem criar clientes, então usar session
 router.post('/cobrancas', Session.verify, ) // adicionar função para controller que cria cobrança. só usuários cadastrados podem criar cobranças, então usar session
 
