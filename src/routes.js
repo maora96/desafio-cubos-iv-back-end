@@ -20,12 +20,8 @@ router.post('/usuarios', Password.encrypt, Users.addUser);
 // clients
 
 router.post('/clientes', Session.verify, Clients.addClient);
-router.put('/clientes', Session.verify, Clients.editClient);
-router.get(
-	'/clientes?clientesPorPagina=:page&offset=:offset',
-	Session.verify,
-	Clients.getClients
-);
+router.put('/clientes', Session.verify, Clients.updateClient);
+router.get('/clientes', Session.verify, Clients.getAllClients);
 router.get(
 	'/clientes?busca=:texto&clientesPorPagina=:page&offset=:offset',
 	Session.verify,
@@ -35,11 +31,7 @@ router.get(
 // bills
 
 router.post('/cobrancas', Session.verify, Bills.addBill);
-router.get(
-	'/cobrancas?cobrancasPorPagina=:page&offset=:offset',
-	Session.verify,
-	Bills.getBills
-);
+router.get('/cobrancas', Session.verify, Bills.getBills);
 router.put('/cobrancas', Session.verify, Bills.payBill);
 router.get('/relatorios', Session.verify, Bills.getReport);
 
