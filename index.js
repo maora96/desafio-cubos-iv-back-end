@@ -1,5 +1,5 @@
 const Koa = require('koa');
-const bodyparser = require('koa-bodyparser')
+const bodyparser = require('koa-bodyparser');
 
 const server = new Koa();
 const router = require('./src/routes');
