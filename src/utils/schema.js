@@ -1,12 +1,18 @@
 const database = require('./database');
 
 const schema = {
-	1: `CREATE TABLE IF NOT EXISTS cobrancas (
+	1: `CREATE TABLE IF NOT EXISTS users (
+			id SERIAL, 
+			email TEXT NOT NULL,
+			senha TEXT NOT NULL,
+			nome TEXT  NOT NULL
+    )`,
+	/*2: `CREATE TABLE IF NOT EXISTS clientes (
 			//content
 	);`,
-	2: `CREATE TABLE IF NOT EXISTS clientes (
+	3: `CREATE TABLE IF NOT EXISTS cobrancas (
 			//content
-	);`,
+	);`,*/
 };
 
 const up = async (number = null) => {

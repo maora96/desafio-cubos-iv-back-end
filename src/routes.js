@@ -2,24 +2,37 @@ const Router = require('koa-router');
 const router = new Router();
 
 const Auth = require('./controllers/auth');
+const Users = require('./controllers/users');
+const Clients = require('./controllers/clients');
+const Bills = require('./controllers/bills');
+
 const Password = require('./middlewares/encrypt');
 const Session = require('./middlewares/session');
 
-// get
-router.get();
 
-// post
-router.post();
+// auth
 
-router.post('/auth', Auth.autenticar)
-router.post('/usuarios', Password.encrypt,) // adicionar função para controller que criar usuário. encriptar senha criada, por isso usar password
-router.post('/clintes, Session.verify, ') // adicionar função para controller que cria cliente. só usuários cadastrados podem criar clientes, então usar session
-router.post('/cobrancas', Session.verify, ) // adicionar função para controller que cria cobrança. só usuários cadastrados podem criar cobranças, então usar session
+router.post('/auth', Auth.authenticate);
 
-// put
-router.put();
 
-// delete
-router.delete();
+// users
+
+router.post('/usuarios', Password.encrypt, Users.addUser)
+
+// clients 
+
+router.post('/clientes', Session.verify, Clients.addClient);
+router.put('/clientes', Session.verify, Clients.editClient);
+router.get('/clientes?clientesPorPagina=:page&offset=:offset', Session.verify, Clients.getClients);
+router.get('/clientes?busca=:texto&clientesPorPagina=:page&offset=:offset', Session.verify, Clients.searchClients);
+
+// bills
+
+router.post('/cobrancas', Session.verify, Bills.addBill);
+router.get('/cobrancas?cobrancasPorPagina=:page&offset=:offset', Session.verify, Bills.getBills);
+router.put('/cobrancas', Session.verify, Bills.payBill);
+router.get('/relatorios', Session.verify, Bills.getReport);
+
+
 
 module.exports = router;
