@@ -1,4 +1,4 @@
-const { JsonWebTokenError } = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const Users = require('../repositories/users')
 const Password = require('../utils/password')
 
@@ -12,7 +12,7 @@ const authenticate = (ctx) => {
     const user = await Users.getUserByEmail(email);
 
     if (user) {
-        const comparison = await Passwword.check(senha, autor.senha);
+        const comparison = await Password.check(senha, autor.senha);
         if (comparison) {
             // sucesso 
             const token = await jwt.sign(
