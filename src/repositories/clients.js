@@ -1,9 +1,3 @@
-// add client
-// update client
-// get client - um client baseado em id
-// get clients - varios clients baseado em keyword searchs
-// get all clients - todos clients
-
 const database = require('../utils/database');
 
 const addClient = async (client) => {
@@ -45,4 +39,19 @@ const getAllClients = async (clientesPorPagina, offset) => {
 	return query.rows;
 };
 
-module.exports = { addClient, updateClient, getAllClients, getClient };
+const searchClients = async (clientesPorPagina, offset, busca) => {
+	const search = `%${busca}%`;
+	const q = {
+		text: 'SELECT * FROM clients WHERE nome LIKE $1 limit $2 offset $3',
+		values: [search, clientesPorPagina, offset],
+	};
+	const query = await database.query(q);
+	return query.rows;
+};
+module.exports = {
+	addClient,
+	updateClient,
+	getAllClients,
+	getClient,
+	searchClients,
+};

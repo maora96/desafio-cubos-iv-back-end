@@ -23,6 +23,9 @@ const addBill = async (ctx) => {
 	// erro valor + data
 	// criar boleto pagarme = linkDoBoleto
 
+	const pay = await pagarme.pay(bill);
+	const linkDoBoleto = pay.boleto_url;
+
 	const billData = {
 		idClient: idDoCliente,
 		descricao,
@@ -38,7 +41,7 @@ const addBill = async (ctx) => {
 const getBills = async (ctx) => {
 	const { cobrancasPorPagina = 10, offset = 0 } = ctx.query;
 
-	const bills = await Bills.getBills(cobrancasPorPagina, offset);
+	const bills = await Bills.getAllBills(cobrancasPorPagina, offset);
 
 	if (!bills) {
 		// erro nao existem bills
@@ -71,7 +74,7 @@ const payBill = async (ctx) => {
 		/// erro bill n existe
 	}
 
-	const pay = await pagarme.pay(bill);
+	// const pay = await pagarme.pay(bill);
 
 	// return response sucesso
 };

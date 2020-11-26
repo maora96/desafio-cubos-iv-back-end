@@ -53,9 +53,13 @@ const updateClient = async (ctx) => {
 };
 
 const getAllClients = async (ctx) => {
-	const { clientesPorPagina = 10, offset = 0 } = ctx.query;
-
-	const clients = await Clients.getAllClients(clientesPorPagina, offset);
+	const { clientesPorPagina = 10, offset = 0, busca = null } = ctx.query;
+	let clients;
+	if (busca === null) {
+		clients = await Clients.getAllClients(clientesPorPagina, offset);
+	} else {
+		clients = await Clients.searchClients(clientesPorPagina, offset, busca);
+	}
 
 	if (!clients) {
 		// erro nao existem clientes
@@ -75,31 +79,6 @@ const getAllClients = async (ctx) => {
 	});
 
 	ctx.body = clients;
-};
-
-const searchClients = async (ctx) => {
-	const { busca, clientesPorPagina = 10, offset = 0 } = ctx.query;
-
-	const clients = await Clients.getClients(busca, clientesPorPagina, offset);
-
-	if (!clients) {
-		// erro nao existem clientes
-	}
-
-	const clientData = clients.map((client) => {
-		// coisar cobranças aqui
-		return {
-			nome: client.nome,
-			cpf: client.cpf,
-			email: client.email,
-			tel: client.tel,
-			billsSent: 0,
-			billsPaid: 0,
-			inRed: false,
-		};
-	});
-
-	// response sucesso clientdata
 };
 
 module.exports = { addClient, updateClient, getAllClients, searchClients };
