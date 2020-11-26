@@ -8,4 +8,4 @@ server.use(bodyparser());
 
 server.use(router.routes());
 
-server.listen(8081);
+server.listen(8081, () => console.log('no ar'));

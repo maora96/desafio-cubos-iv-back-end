@@ -4,8 +4,8 @@ const addUser = async (user) => {
 	const query = {
 		text: `INSERT INTO users 
         (id, email, senha, nome)
-        VALUES ($1, $2, $3, $4) RETURNING *`,
-		values: [user.id, user.email, user.senha, user.nome],
+        VALUES (DEFAULT, $1, $2, $3) RETURNING *`,
+		values: [user.email, user.senha, user.nome],
 	};
 
 	return database.query(query);

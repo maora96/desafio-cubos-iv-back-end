@@ -7,10 +7,14 @@ const schema = {
 			senha TEXT NOT NULL,
 			nome TEXT  NOT NULL
     )`,
-	/*2: `CREATE TABLE IF NOT EXISTS clientes (
-			//content
+	2: `CREATE TABLE IF NOT EXISTS clients (
+			id SERIAL, 
+			nome TEXT NOT NULL,
+			cpf TEXT NOT NULL,
+			email TEXT  NOT NULL,
+			tel TEXT  NOT NULL
 	);`,
-	3: `CREATE TABLE IF NOT EXISTS cobrancas (
+	/*3: `CREATE TABLE IF NOT EXISTS cobrancas (
 			//content
 	);`,*/
 };

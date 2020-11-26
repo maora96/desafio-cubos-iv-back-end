@@ -43,6 +43,7 @@ const updateClient = async (ctx) => {
 				tel
 			);
 			// return response success update como parametro
+			ctx.body = update;
 		} else {
 			// return response cliente n existe
 		}
@@ -73,7 +74,7 @@ const getAllClients = async (ctx) => {
 		};
 	});
 
-	// response sucesso clientdata
+	ctx.body = clients;
 };
 
 const searchClients = async (ctx) => {

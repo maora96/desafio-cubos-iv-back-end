@@ -20,7 +20,7 @@ const addUser = async (ctx) => {
 		senha: hash,
 	};
 
-	const result = await users.addUser(user);
+	const result = await Users.addUser(user);
 	// return response
 };
 

@@ -11,6 +11,10 @@ const Session = require('./middlewares/session');
 
 // auth
 
+router.get('/', (ctx) => {
+	ctx.body = 'sigh';
+});
+
 router.post('/auth', Auth.authenticate);
 
 // users
@@ -19,14 +23,9 @@ router.post('/usuarios', Password.encrypt, Users.addUser);
 
 // clients
 
-router.post('/clientes', Session.verify, Clients.addClient);
-router.put('/clientes', Session.verify, Clients.updateClient);
-router.get('/clientes', Session.verify, Clients.getAllClients);
-router.get(
-	'/clientes?busca=:texto&clientesPorPagina=:page&offset=:offset',
-	Session.verify,
-	Clients.searchClients
-);
+router.post('/clientes', Clients.addClient);
+router.put('/clientes', Clients.updateClient);
+router.get('/clientes', Clients.getAllClients);
 
 // bills
 
