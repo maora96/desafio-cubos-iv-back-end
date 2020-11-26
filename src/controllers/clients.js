@@ -81,4 +81,4 @@ const getAllClients = async (ctx) => {
 	ctx.body = clients;
 };
 
-module.exports = { addClient, updateClient, getAllClients, searchClients };
+module.exports = { addClient, updateClient, getAllClients };

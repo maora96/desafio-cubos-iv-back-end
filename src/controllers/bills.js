@@ -1,6 +1,7 @@
 const Clients = require('../repositories/clients');
 const Bills = require('../repositories/bills');
 const pagarme = require('../utils/pagarme');
+const axios = require('axios').default;
 
 const addBill = async (ctx) => {
 	const {
@@ -74,6 +75,13 @@ const payBill = async (ctx) => {
 		/// erro bill n existe
 	}
 
+	const pagar = await axios.put(
+		`https://api.pagar.me/1/transactions/${bill.id}`,
+		{
+			api_key: process.env.PAGARME_KEY,
+			status: 'paid',
+		}
+	);
 	// const pay = await pagarme.pay(bill);
 
 	// return response sucesso

@@ -40,10 +40,8 @@ const getAllClients = async (clientesPorPagina, offset) => {
 };
 
 const searchClients = async (clientesPorPagina, offset, busca) => {
-	const search = `%${busca}%`;
 	const q = {
-		text: 'SELECT * FROM clients WHERE nome LIKE $1 limit $2 offset $3',
-		values: [search, clientesPorPagina, offset],
+		text: `SELECT * FROM clients WHERE nome LIKE '%${busca}%' limit ${clientesPorPagina} offset ${offset}`,
 	};
 	const query = await database.query(q);
 	return query.rows;
