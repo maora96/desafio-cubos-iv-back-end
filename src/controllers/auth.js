@@ -1,13 +1,16 @@
 const jwt = require('jsonwebtoken');
 const Users = require('../repositories/users');
 const Password = require('../utils/password');
+const response = require('../controllers/response');
 
 const authenticate = async (ctx) => {
 	console.log('hello');
 	const { email = null, senha = null } = ctx.request.body;
 
 	if (!email || !senha) {
-		ctx.body = 'erro!';
+		response(ctx, 404, {
+			mensagem: 'Pedido mal-formatado!',
+		});
 	}
 
 	const user = await Users.getUserByEmail(email);
@@ -15,7 +18,6 @@ const authenticate = async (ctx) => {
 	if (user) {
 		const comparison = await Password.check(senha, user.senha);
 		if (comparison) {
-			// sucesso
 			const token = await jwt.sign(
 				{ id: user.id, email: user.email },
 				process.env.JWT_SECRET || 'riplaptop',
@@ -23,7 +25,15 @@ const authenticate = async (ctx) => {
 					expiresIn: '1h',
 				}
 			);
-			ctx.body = token; // return response
+			ctx.body = token;
+			response(ctx, 200, {
+				mensagem: 'Usuário logado com sucesso!',
+				token: token,
+			});
+		} else {
+			response(ctx, 404, {
+				mensagem: 'E-mail ou senha incorretos.',
+			});
 		}
 	}
 };

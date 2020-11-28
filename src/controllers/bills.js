@@ -2,8 +2,13 @@ const Clients = require('../repositories/clients');
 const Bills = require('../repositories/bills');
 const pagarme = require('../utils/pagarme');
 const axios = require('axios').default;
+const response = require('../controllers/response');
+
+const { sendEmail } = require('../utils/email');
 
 const addBill = async (ctx) => {
+	const userId = ctx.state.userId;
+
 	const {
 		idDoCliente = null,
 		descricao = null,
@@ -12,31 +17,66 @@ const addBill = async (ctx) => {
 	} = ctx.request.body;
 
 	if (!idDoCliente || !descricao || !valor || !vencimento) {
-		// response mal formatado
+		response(ctx, 404, {
+			mensagem: 'Pedido mal-formatado!',
+		});
 	}
 
-	const client = await Clients.getClient(idDoCliente);
+	const client = await Clients.getClient(idDoCliente, userId);
 
 	if (!client) {
-		// erro nao ha cliente
+		response(ctx, 404, {
+			mensagem: 'Cliente não encontrado.',
+		});
 	}
 
-	// erro valor + data
-	// criar boleto pagarme = linkDoBoleto
+	const bill = {
+		idDoCliente: idDoCliente,
+		descricao,
+		valor: Number(valor),
+		vencimento,
+	};
 
 	const pay = await pagarme.pay(bill);
 	const linkDoBoleto = pay.boleto_url;
+	const pagarmeStatus = pay.status;
+	const pagarmeId = pay.id;
 
 	const billData = {
-		idClient: idDoCliente,
+		idDoCliente,
 		descricao,
 		valor: Number(valor),
 		vencimento,
 		linkDoBoleto,
+		status: pagarmeStatus,
+		pagarmeId,
 	};
 
-	const bill = await Bills.addBill(billData);
-	/// response success boleto
+	const actualBill = await Bills.addBill(billData);
+
+	await sendEmail(
+		client[0].email,
+		'Seu boleto chegou!',
+		`Pague seu boleto clicando <a href="${linkDoBoleto}">aqui</a>.`
+	);
+
+	let status =
+		pagarmeStatus === 'paid'
+			? 'PAGO'
+			: pagarmeStatus === 'waiting_payment'
+			? 'AGUARDANDO'
+			: 'VENCIDO';
+
+	response(ctx, 201, {
+		cobranca: {
+			idDoCliente,
+			descricao,
+			valor: Number(valor),
+			vencimento,
+			linkDoBoleto,
+			status,
+		},
+	});
 };
 
 const getBills = async (ctx) => {
@@ -45,57 +85,118 @@ const getBills = async (ctx) => {
 	const bills = await Bills.getAllBills(cobrancasPorPagina, offset);
 
 	if (!bills) {
-		// erro nao existem bills
+		response(ctx, 404, {
+			mensagem: 'Nenhuma cobrança encontrada.',
+		});
 	}
 
 	const billsData = bills.map((bill) => {
-		// ???? bills vao retornar desse jeito?? se sim, deletar map
+		let status =
+			bill.status === 'paid'
+				? 'PAGO'
+				: bill.status === 'waiting_payment'
+				? 'AGUARDANDO'
+				: 'VENCIDO';
+
 		return {
 			id: bill.id,
-			idDoCliente: bill.idDoCliente,
+			idDoCliente: bill.id_do_cliente,
 			descricao: bill.descricao,
 			valor: bill.valor,
 			vencimento: bill.vencimento,
-			linkDoBoleto: bill.linkDoBoleto,
-			status: bill.status,
+			linkDoBoleto: bill.link_do_boleto,
+			status,
 		};
 	});
 
-	// response sucesso clientdata
+	const numberOfBills = bills.length;
+
+	const totalPages = Math.ceil(numberOfBills / cobrancasPorPagina);
+	const currentPage = totalPages - Math.ceil(offset / cobrancasPorPagina);
+
+	let dados = {
+		paginaAtual: currentPage,
+		totalDePaginas: totalPages,
+		cobrancas: billsData,
+	};
+
+	response(ctx, 200, dados);
 };
 
 const payBill = async (ctx) => {
-	/// rezar pro pagarme gods
-
 	const { idDaCobranca } = ctx.request.body;
 
 	const bill = await Bills.getBill(idDaCobranca);
 
 	if (!bill) {
-		/// erro bill n existe
+		response(ctx, 404, {
+			mensagem: 'Nenhuma cobrança encontrada.',
+		});
 	}
+	console.log(bill);
 
 	const pagar = await axios.put(
-		`https://api.pagar.me/1/transactions/${bill.id}`,
+		`https://api.pagar.me/1/transactions/${bill[0].pagarmeid}`,
 		{
-			api_key: process.env.PAGARME_KEY,
+			api_key: `${process.env.PAGARME_KEY}`,
 			status: 'paid',
 		}
 	);
-	// const pay = await pagarme.pay(bill);
 
-	// return response sucesso
+	response(ctx, 200, {
+		mensagem: 'Cobrança paga com sucesso',
+	});
 };
 
 const getReport = async (ctx) => {
-	// pegar todos os clientes, ver suas cobranças, ver se foram pagas ou não.
-	// somar saldo de cobranças pagas
-	// somar quantidade de cobranças pagas, previstas e nao pagas
-	// somar quantidade de clientes inadimplentes e adimplentes
-	// somar quantidade de cobrancas vencidas
-	/// como pegar todos clientes? - pegar no banco de dados
-	/// pegar todas as cobranças e fazer um join?
-	// ?? profit
+	const userId = ctx.state.userId;
+	const clientsAndBills = await Clients.getClientsAndBills(userId);
+
+	let saldo = 0;
+	let cobrancasPagas = 0;
+	let cobrancasVencidas = 0;
+	let cobrancasPrevistas = 0;
+
+	const today = new Date().getTime();
+
+	let inRed = [];
+	let inBlue = [];
+
+	for (const bill of clientsAndBills) {
+		saldo += bill.valor;
+		if (bill.status === 'paid') {
+			cobrancasPagas++;
+		} else if (bill.status === 'waiting_payment') {
+			cobrancasPrevistas++;
+		} else {
+			cobrancasVencidas++;
+		}
+
+		const vencimento = new Date(bill.vencimento).getTime();
+		if (vencimento - today < 0) {
+			// inadimplemente
+			if (!inRed.find((nome) => nome === bill.nome)) {
+				inRed.push(bill.nome);
+			}
+		} else {
+			if (!inBlue.find((nome) => nome === bill.nome)) {
+				inBlue.push(bill.nome);
+			}
+		}
+	}
+
+	const data = {
+		relatorio: {
+			qtdClientesAdimplentes: inBlue.length,
+			qtdClientesInadimplentes: inRed.length,
+			qtdCobrancasPrevistas: cobrancasPrevistas,
+			qtdCobrancasPagas: cobrancasPagas,
+			qtdCobrancasVencidas: cobrancasVencidas,
+			saldoEmConta: saldo,
+		},
+	};
+
+	response(ctx, 200, data);
 };
 
 module.exports = { addBill, getBills, payBill, getReport };

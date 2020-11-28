@@ -11,9 +11,7 @@ const addUser = async (user) => {
 	return database.query(query);
 };
 
-const getUserByEmail = async (email = null) => {
-	// checar se email é nulo
-
+const getUserByEmail = async (email) => {
 	const query = {
 		text: `SELECT * FROM users where email = $1`,
 		values: [email],

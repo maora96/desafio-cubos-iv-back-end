@@ -1,17 +1,22 @@
 const Users = require('../repositories/users');
+const response = require('../controllers/response');
 
 const addUser = async (ctx) => {
 	const { email = null, nome = null } = ctx.request.body;
 	const { hash } = ctx.state;
 
 	if (!email || !nome || !hash) {
-		// erro
+		response(ctx, 404, {
+			mensagem: 'Pedido mal-formatado!',
+		});
 	}
 
 	const userExists = await Users.getUserByEmail(email);
 
 	if (userExists) {
-		// cadastrado
+		response(ctx, 404, {
+			mensagem: 'Usuário com esse e-mail já cadastrado.',
+		});
 	}
 
 	const user = {
@@ -21,7 +26,8 @@ const addUser = async (ctx) => {
 	};
 
 	const result = await Users.addUser(user);
-	// return response
+	const newUser = await Users.getUserByEmail(email);
+	response(ctx, 201, { id: newUser.id });
 };
 
 module.exports = { addUser };

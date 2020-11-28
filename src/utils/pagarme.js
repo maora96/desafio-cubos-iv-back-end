@@ -1,14 +1,16 @@
 const axios = require('axios').default;
 const Clients = require('../repositories/clients');
+const response = require('../controllers/response');
 
 require('dotenv').config();
 
 const pay = async (bill) => {
-	const { idDoCliente, descricao, valor, vencimento } = data;
+	const { idDoCliente, descricao, valor, vencimento } = bill;
 
-	const client = Clients.getClient(idDoCliente);
+	const client = await Clients.getClient(idDoCliente);
 
-	// checar se cliente existe?
+	const cpf = client[0].cpf;
+	const newCPF = cpf.replace('.', '').replace('.', '').replace('-', '');
 
 	try {
 		const transaction = await axios.post(
@@ -19,23 +21,26 @@ const pay = async (bill) => {
 				descricao,
 				payment_method: 'boleto',
 				customer: {
-					name: client.nome,
+					name: client[0].nome,
+					type: 'individual',
 					documents: [
 						{
-							type: `cpf`,
-							number: client.cpf,
+							type: 'cpf',
+							number: '04667799501',
 						},
 					],
-					phone_numbers: [client.tel],
+					phone_numbers: [client[0].tel],
 				},
 				capture: true,
 				api_key: process.env.PAGARME_KEY,
 			}
 		);
 		return transaction.data;
-		// SEND EMAIL
 	} catch (err) {
-		console.log(err.response.data);
-		//return response erro
+		response(ctx, 404, {
+			mensagem: err.response.data,
+		});
 	}
 };
+
+module.exports = { pay };

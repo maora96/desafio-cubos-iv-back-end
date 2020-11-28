@@ -10,8 +10,9 @@ const verify = async (ctx, next) => {
 		ctx.state.userId = verification.id;
 		ctx.state.email = verification.email;
 	} catch (err) {
-		console.log('ação proibida');
-		// return response erro
+		response(ctx, 404, {
+			mensagem: 'Ação proibida',
+		});
 	}
 	return next();
 };

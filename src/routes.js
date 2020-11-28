@@ -23,9 +23,9 @@ router.post('/usuarios', Password.encrypt, Users.addUser);
 
 // clients
 
-router.post('/clientes', Clients.addClient);
-router.put('/clientes', Clients.updateClient);
-router.get('/clientes', Clients.getAllClients);
+router.post('/clientes', Session.verify, Clients.addClient);
+router.put('/clientes', Session.verify, Clients.updateClient);
+router.get('/clientes', Session.verify, Clients.getAllClients);
 
 // bills
 

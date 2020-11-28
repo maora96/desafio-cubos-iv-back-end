@@ -1,4 +1,6 @@
 const Clients = require('../repositories/clients');
+const Bills = require('../repositories/bills');
+const response = require('../controllers/response');
 
 const addClient = async (ctx) => {
 	const {
@@ -9,7 +11,9 @@ const addClient = async (ctx) => {
 	} = ctx.request.body;
 
 	if (!nome || !cpf || !email || !tel) {
-		// response pedido mal-formatado
+		response(ctx, 404, {
+			mensagem: 'Pedido mal-formatado!',
+		});
 	}
 
 	const client = {
@@ -19,8 +23,11 @@ const addClient = async (ctx) => {
 		tel,
 	};
 
-	const result = await Clients.addClient(client);
-	// return response success
+	const userId = ctx.state.userId;
+	const result = await Clients.addClient(client, userId);
+	response(ctx, 201, {
+		id: result[0].id,
+	});
 };
 
 const updateClient = async (ctx) => {
@@ -32,6 +39,8 @@ const updateClient = async (ctx) => {
 		tel = null,
 	} = ctx.request.body;
 
+	const userId = ctx.state.userId;
+
 	if (id) {
 		const client = await Clients.getClient(id);
 		if (client) {
@@ -40,45 +49,88 @@ const updateClient = async (ctx) => {
 				nome,
 				cpf,
 				email,
-				tel
+				tel,
+				userId
 			);
-			// return response success update como parametro
-			ctx.body = update;
+			response(ctx, 200, update);
 		} else {
-			// return response cliente n existe
+			response(ctx, 404, {
+				mensagem: 'Cliente não cadastrado.',
+			});
 		}
 	} else {
-		// return response mal formatado
+		response(ctx, 404, {
+			mensagem: 'Pedido mal-formatado!',
+		});
 	}
 };
 
 const getAllClients = async (ctx) => {
 	const { clientesPorPagina = 10, offset = 0, busca = null } = ctx.query;
 	let clients;
+	const userId = ctx.state.userId;
 	if (busca === null) {
-		clients = await Clients.getAllClients(clientesPorPagina, offset);
+		clients = await Clients.getAllClients(
+			clientesPorPagina,
+			offset,
+			userId
+		);
 	} else {
-		clients = await Clients.searchClients(clientesPorPagina, offset, busca);
+		clients = await Clients.searchClients(
+			clientesPorPagina,
+			offset,
+			busca,
+			userId
+		);
 	}
 
 	if (!clients) {
-		// erro nao existem clientes
+		response(ctx, 404, {
+			mensagem: 'Não existem clientes cadastrados.',
+		});
 	}
 
+	const bills = await Bills.getBills();
+
 	const clientData = clients.map((client) => {
-		// coisar cobranças aqui
+		const today = new Date().getTime();
+		let done = 0;
+		let received = 0;
+		let inRed = false;
+		for (bill of bills) {
+			const vencimento = new Date(bill.vencimento).getTime();
+			if (bill.id_do_cliente === client.id) {
+				done += bill.valor;
+				if (bill.status === 'paid') {
+					received += bill.valor;
+				}
+				if (vencimento - today < 0) {
+					inRed = true;
+				}
+			}
+		}
 		return {
 			nome: client.nome,
 			cpf: client.cpf,
 			email: client.email,
 			tel: client.tel,
-			billsSent: 0,
-			billsPaid: 0,
-			inRed: false,
+			cobrancasFeitas: done,
+			cobrancasRecebidas: received,
+			estaInadimplente: inRed,
 		};
 	});
 
-	ctx.body = clients;
+	const numberOfClientes = clients.length;
+
+	const totalPages = Math.ceil(numberOfClientes / clientesPorPagina);
+	const currentPage = totalPages - Math.ceil(offset / clientesPorPagina);
+
+	const dados = {
+		paginaAtual: currentPage,
+		totalDePaginas: totalPages,
+		clientes: clientData,
+	};
+	response(ctx, 200, dados);
 };
 
 module.exports = { addClient, updateClient, getAllClients };
