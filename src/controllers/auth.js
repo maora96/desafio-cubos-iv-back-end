@@ -4,7 +4,6 @@ const Password = require('../utils/password');
 const response = require('../controllers/response');
 
 const authenticate = async (ctx) => {
-	console.log('hello');
 	const { email = null, senha = null } = ctx.request.body;
 
 	if (!email || !senha) {
@@ -35,6 +34,10 @@ const authenticate = async (ctx) => {
 				mensagem: 'E-mail ou senha incorretos.',
 			});
 		}
+	} else {
+		response(ctx, 404, {
+			mensagem: 'E-mail ou senha incorretos.',
+		});
 	}
 };
 

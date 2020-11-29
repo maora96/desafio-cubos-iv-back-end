@@ -4,13 +4,10 @@ const response = require('../controllers/response');
 
 require('dotenv').config();
 
-const pay = async (bill) => {
+const pay = async (bill, userId) => {
 	const { idDoCliente, descricao, valor, vencimento } = bill;
 
-	const client = await Clients.getClient(idDoCliente);
-
-	const cpf = client[0].cpf;
-	const newCPF = cpf.replace('.', '').replace('.', '').replace('-', '');
+	const client = await Clients.getClient(idDoCliente, userId);
 
 	try {
 		const transaction = await axios.post(
@@ -37,9 +34,7 @@ const pay = async (bill) => {
 		);
 		return transaction.data;
 	} catch (err) {
-		response(ctx, 404, {
-			mensagem: err.response.data,
-		});
+		console.log(err);
 	}
 };
 

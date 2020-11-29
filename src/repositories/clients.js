@@ -13,8 +13,8 @@ const addClient = async (client, userId) => {
 const updateClient = async (id, nome, cpf, email, tel, userId) => {
 	const q = {
 		text:
-			'UPDATE clients WHERE userId = $1 set nome = $2, cpf = $3, email  = $4, tel = $5 where id = $6 returning *',
-		values: [userId, nome, cpf, email, tel, id],
+			'UPDATE clients set nome = $1, cpf = $2, email  = $3, tel = $4 where id = $5 AND userId = $6 returning *',
+		values: [nome, cpf, email, tel, id, userId],
 	};
 	const query = await database.query(q);
 	return query.rows.shift();
@@ -51,7 +51,7 @@ const searchClients = async (clientesPorPagina, offset, busca, userId) => {
 const getClientsAndBills = async (userId) => {
 	const q = {
 		text:
-			'SELECT * FROM clients c WHERE userId = $1 INNER JOIN bills ON c.id = id_do_cliente',
+			'SELECT * FROM clients c INNER JOIN bills ON c.id = id_do_cliente WHERE c.userId = $1',
 		values: [userId],
 	};
 

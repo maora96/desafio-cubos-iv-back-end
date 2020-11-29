@@ -41,7 +41,7 @@ const getAllBills = async (cobrancasPorPagina, offset) => {
 const getBills = async (userId) => {
 	const q = {
 		text:
-			'SELECT * FROM bills INNER JOIN clients c on id_do_cliente = c.id WHERE c.userId = $1 ',
+			'SELECT * FROM bills INNER JOIN clients c WHERE c.userId = $1 on id_do_cliente = c.id',
 		values: [userId],
 	};
 	const query = await database.query(q);

@@ -37,7 +37,7 @@ const addBill = async (ctx) => {
 		vencimento,
 	};
 
-	const pay = await pagarme.pay(bill);
+	const pay = await pagarme.pay(bill, userId);
 	const linkDoBoleto = pay.boleto_url;
 	const pagarmeStatus = pay.status;
 	const pagarmeId = pay.id;
