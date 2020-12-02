@@ -11,9 +11,6 @@ const Session = require('./middlewares/session');
 
 // auth
 
-router.get('/', (ctx) => {
-	ctx.body = 'sigh';
-});
 
 router.post('/auth', Auth.authenticate);
 

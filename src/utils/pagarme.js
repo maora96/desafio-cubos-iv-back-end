@@ -34,7 +34,7 @@ const pay = async (bill, userId) => {
 		);
 		return transaction.data;
 	} catch (err) {
-		console.log(err);
+		console.log(err.response.data);
 	}
 };
 

@@ -13,7 +13,7 @@ const addUser = async (user) => {
 
 const getUserByEmail = async (email) => {
 	const query = {
-		text: `SELECT * FROM users where email = $1`,
+		text: `SELECT * FROM users WHERE email = $1`,
 		values: [email],
 	};
 

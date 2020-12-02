@@ -33,9 +33,20 @@ const getClient = async (id, userId) => {
 
 const getAllClients = async (clientesPorPagina, offset, userId) => {
 	const q = {
-		text: 'SELECT * FROM clients where userId = $1 limit $2 offset $3',
+		text: 'SELECT * FROM clients WHERE userId = $1 limit $2 offset $3',
 		values: [userId, clientesPorPagina, offset],
 	};
+
+	const query = await database.query(q);
+	return query.rows;
+};
+
+const getAllClientsForReal = async (userId) => {
+	const q = {
+		text: 'SELECT * FROM clients WHERE userId = $1',
+		values: [userId],
+	};
+
 	const query = await database.query(q);
 	return query.rows;
 };
@@ -66,4 +77,5 @@ module.exports = {
 	getClient,
 	searchClients,
 	getClientsAndBills,
+	getAllClientsForReal,
 };

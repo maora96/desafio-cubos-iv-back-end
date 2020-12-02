@@ -21,7 +21,7 @@ const addBill = async (bill) => {
 
 const getBill = async (id) => {
 	const q = {
-		text: 'SELECT * FROM bills where id = $1',
+		text: 'SELECT * FROM bills WHERE id = $1',
 		values: [id],
 	};
 
@@ -38,11 +38,17 @@ const getAllBills = async (cobrancasPorPagina, offset) => {
 	return query.rows;
 };
 
+const getAllBillsForReal = async () => {
+	const q = {
+		text: 'SELECT * FROM bills',
+	};
+	const query = await database.query(q);
+	return query.rows;
+};
+
 const getBills = async (userId) => {
 	const q = {
-		text:
-			'SELECT * FROM bills INNER JOIN clients c WHERE c.userId = $1 on id_do_cliente = c.id',
-		values: [userId],
+		text: `SELECT * FROM bills INNER JOIN clients c on id_do_cliente = c.id WHERE c.userID = ${userId}`,
 	};
 	const query = await database.query(q);
 	return query.rows;
@@ -53,4 +59,5 @@ module.exports = {
 	getBill,
 	getAllBills,
 	getBills,
+	getAllBillsForReal,
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 const Clients = require('../repositories/clients');
 const Bills = require('../repositories/bills');
 const response = require('../controllers/response');
@@ -40,9 +41,13 @@ const updateClient = async (ctx) => {
 	} = ctx.request.body;
 
 	const userId = ctx.state.userId;
+	console.log(userId);
+	console.log(id[id]);
+	console.log(nome);
 
 	if (id) {
-		const client = await Clients.getClient(id);
+		const client = await Clients.getClient(id, userId);
+		console.log(client);
 		if (client) {
 			const update = await Clients.updateClient(
 				id,
@@ -66,8 +71,9 @@ const updateClient = async (ctx) => {
 };
 
 const getAllClients = async (ctx) => {
-	const { clientesPorPagina = 10, offset = 0, busca = null } = ctx.query;
+	const { clientesPorPagina = null, offset = null, busca = null } = ctx.query;
 	let clients;
+
 	const userId = ctx.state.userId;
 	if (busca === null) {
 		clients = await Clients.getAllClients(
@@ -75,6 +81,8 @@ const getAllClients = async (ctx) => {
 			offset,
 			userId
 		);
+	} else if (clientesPorPagina === null && offset === null) {
+		clients = await Clients.getAllClientsForReal(userId);
 	} else {
 		clients = await Clients.searchClients(
 			clientesPorPagina,
@@ -90,7 +98,7 @@ const getAllClients = async (ctx) => {
 		});
 	}
 
-	const bills = await Bills.getBills();
+	const bills = await Bills.getBills(userId);
 
 	const clientData = clients.map((client) => {
 		const today = new Date().getTime();
@@ -110,6 +118,7 @@ const getAllClients = async (ctx) => {
 			}
 		}
 		return {
+			id: client.id,
 			nome: client.nome,
 			cpf: client.cpf,
 			email: client.email,
@@ -122,7 +131,11 @@ const getAllClients = async (ctx) => {
 
 	const numberOfClientes = clients.length;
 
-	const totalPages = Math.ceil(numberOfClientes / clientesPorPagina);
+	const calculatePageCount = (pageSize, totalClients) => {
+		return totalClients < pageSize ? 1 : Math.ceil(totalClients / pageSize);
+	};
+
+	const totalPages = calculatePageCount(10, numberOfClientes);
 	const currentPage = totalPages - Math.ceil(offset / clientesPorPagina);
 
 	const dados = {

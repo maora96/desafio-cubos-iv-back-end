@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-restricted-syntax */
 const Clients = require('../repositories/clients');
 const Bills = require('../repositories/bills');
 const pagarme = require('../utils/pagarme');
@@ -38,6 +40,7 @@ const addBill = async (ctx) => {
 	};
 
 	const pay = await pagarme.pay(bill, userId);
+	console.log({ pay });
 	const linkDoBoleto = pay.boleto_url;
 	const pagarmeStatus = pay.status;
 	const pagarmeId = pay.id;
@@ -80,9 +83,15 @@ const addBill = async (ctx) => {
 };
 
 const getBills = async (ctx) => {
-	const { cobrancasPorPagina = 10, offset = 0 } = ctx.query;
+	const { cobrancasPorPagina = null, offset = null } = ctx.query;
 
-	const bills = await Bills.getAllBills(cobrancasPorPagina, offset);
+	let bills;
+
+	if (cobrancasPorPagina === null && offset === null) {
+		bills = await Bills.getAllBillsForReal();
+	} else {
+		bills = await Bills.getAllBills(cobrancasPorPagina, offset);
+	}
 
 	if (!bills) {
 		response(ctx, 404, {
@@ -111,7 +120,11 @@ const getBills = async (ctx) => {
 
 	const numberOfBills = bills.length;
 
-	const totalPages = Math.ceil(numberOfBills / cobrancasPorPagina);
+	const calculatePageCount = (pageSize, totalClients) => {
+		return totalClients < pageSize ? 1 : Math.ceil(totalClients / pageSize);
+	};
+
+	const totalPages = calculatePageCount(10, numberOfBills);
 	const currentPage = totalPages - Math.ceil(offset / cobrancasPorPagina);
 
 	let dados = {
@@ -133,7 +146,6 @@ const payBill = async (ctx) => {
 			mensagem: 'Nenhuma cobrança encontrada.',
 		});
 	}
-	console.log(bill);
 
 	const pagar = await axios.put(
 		`https://api.pagar.me/1/transactions/${bill[0].pagarmeid}`,
@@ -162,9 +174,10 @@ const getReport = async (ctx) => {
 	let inRed = [];
 	let inBlue = [];
 
+	console.log({ clientsAndBills });
 	for (const bill of clientsAndBills) {
-		saldo += bill.valor;
 		if (bill.status === 'paid') {
+			saldo += bill.valor;
 			cobrancasPagas++;
 		} else if (bill.status === 'waiting_payment') {
 			cobrancasPrevistas++;
