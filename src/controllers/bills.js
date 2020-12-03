@@ -162,6 +162,11 @@ const payBill = async (ctx) => {
 
 const getReport = async (ctx) => {
 	const userId = ctx.state.userId;
+	const { periodo = null } = ctx.query;
+
+	const month = new Date().getMonth();
+	const year = new Date().getFullYear();
+
 	const clientsAndBills = await Clients.getClientsAndBills(userId);
 
 	let saldo = 0;
@@ -174,8 +179,28 @@ const getReport = async (ctx) => {
 	let inRed = [];
 	let inBlue = [];
 
-	console.log({ clientsAndBills });
+	let actualBills = [];
+
 	for (const bill of clientsAndBills) {
+		const billMonth = new Date(bill.vencimento).getMonth();
+		const billYear = new Date(bill.vencimento).getFullYear();
+		console.log(billMonth, billYear);
+		if (periodo === 'mes') {
+			if (billMonth === month && billYear === year) {
+				actualBills.push(bill);
+			}
+		} else if (periodo === 'ano') {
+			if (billYear === year) {
+				actualBills.push(bill);
+			}
+		} else {
+			actualBills.push(bill);
+		}
+	}
+
+	console.log({ actualBills });
+
+	for (const bill of actualBills) {
 		if (bill.status === 'paid') {
 			saldo += bill.valor;
 			cobrancasPagas++;
